@@ -1,0 +1,44 @@
+name: Stage TCV 1.1.0 Windows distribution draft
+on:
+  push:
+    branches:
+      - automation/stage-product-1.1.0
+    paths:
+      - .github/workflows/stage-product-1.1.0.yml
+permissions:
+  contents: write
+jobs:
+  stage-release:
+    if: github.repository == 'AFernandezAvelli/TrainCableViewer-Releases'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create draft only, without touching update channels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view product-1.1.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; no changes'
+            exit 0
+          fi
+          cat > "$RUNNER_TEMP/notes.md" <<'NOTES'
+          # Train Cable Viewer 1.1.0
+          
+          ## Búsqueda inversa de cables desde esquemas
+          - Doble clic sobre un conductor vectorial del PDF para localizar su conexión física en la Wiring List mediante Smart Trace.
+          - Selección conservadora del cable cuando hay varios candidatos, sin resultados arbitrarios.
+          - Búsqueda por identificador completo, selección de fila WL y resaltado del trazado.
+          - Preparación silenciosa y reutilización de cachés de Smart Trace.
+          - Incluye las mejoras anteriores de importación Excel y personalización del Plan IP (1.0.9).
+          
+          ## Validación
+          Registro de cualificación: 216 pruebas superadas, ninguna fallida; comprobaciones de integración con PDF y WL reales y paquetes Windows. No sustituye la comprobación eléctrica independiente en campo.
+          
+          ## Descargas
+          - `TrainCableViewer-1.1.0-Setup.exe`: instalador.
+          - `TrainCableViewer-1.1.0-Portable.exe`: aplicación portátil.
+          - `SHA256SUMS.txt`: sumas de comprobación.
+          
+          La actualización automática se activará **solo** después de adjuntar los archivos, verificar integridad y publicar los manifiestos de canal firmados. La release antigua `v7.10.17` debe seguir sirviendo de puente a instalaciones RC7.
+          NOTES
+          gh release create product-1.1.0 --repo "$GITHUB_REPOSITORY" --draft --title 'Train Cable Viewer 1.1.0' --notes-file "$RUNNER_TEMP/notes.md" --target main
